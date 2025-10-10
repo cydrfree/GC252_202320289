@@ -10,6 +10,11 @@ const restitution = 0.5;
 let hoveredBall = null;
 let grabbedBall = null;
 
+let lastVx = 0;
+let lastVy = 0;
+const sampleNum = 10;
+let mouseDeltas = [];
+
 function setup() {
   createCanvas(700, 800);
 
@@ -27,6 +32,10 @@ function draw() {
 
   if (grabbedBall) {
     grabbedBall.drag(mouseX, mouseY);
+    mouseDeltas.push(createVector(mouseX - pmouseX, mouseY - pmouseY));
+    if (mouseDeltas.length > sampleNum) {
+      mouseDeltas.shift();
+    }
   }
 
   balls.forEach((aBall) => {
@@ -50,6 +59,10 @@ function draw() {
     aBall.show(aBall === hoveredBall);
     aBall.showDebug();
   });
+
+  strokeWeight(1);
+  stroke("white");
+  line(width * 0.5, height * 0.5, width * 0.5 + lastVx, height * 0.5 + lastVy);
 }
 
 function mousePressed() {
@@ -62,13 +75,32 @@ function mousePressed() {
     if (hoveredBall) {
       grabbedBall = hoveredBall;
       grabbedBall.grab(mouseX, mouseY);
+      mouseDeltas = [];
     }
   }
 }
 
 function mouseReleased() {
   if (grabbedBall) {
-    grabbedBall.ungrab();
+    // const vx = mouseX - pmouseX;
+    // const vy = mouseY - pmouseY;
+    // lastVx = vx;
+    // lastVy = vy;
+    // grabbedBall.ungrab(vx, vy);
+    if (mouseDeltas.length > 0) {
+      const averageMouseDelta = createVector(0, 0);
+      mouseDeltas.forEach((aMousePos) => {
+        averageMouseDelta.add(aMousePos);
+      });
+      averageMouseDelta.div(mouseDeltas.length);
+      grabbedBall.ungrab(averageMouseDelta.x, averageMouseDelta.y);
+      lastVx = averageMouseDelta.x;
+      lastVy = averageMouseDelta.y;
+    } else {
+      grabbedBall.ungrab(0, 0);
+      lastVx = 0;
+      lastVy = 0;
+    }
     grabbedBall = null;
   }
 }

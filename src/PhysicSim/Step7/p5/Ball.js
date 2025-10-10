@@ -3,7 +3,6 @@ class Ball {
   vel;
   diameter;
   colour;
-  // isMouseInside;
   isGrabbbed;
   grabOffset;
   constructor(diameter, speed, colour) {
@@ -11,7 +10,6 @@ class Ball {
     this.vel = p5.Vector.random2D().setMag(speed);
     this.diameter = diameter;
     this.colour = colour;
-    // this.isMouseInside = false;
     this.isGrabbbed = false;
     this.grabOffset = createVector(0, 0);
   }
@@ -21,11 +19,6 @@ class Ball {
     const randomAngle = Math.random() * 360;
     this.vel.setHeading(radians(randomAngle));
     this.vel.setMag(speed);
-  }
-
-  drag(x, y) {
-    this.pos.set(x, y);
-    this.pos.add(this.grabOffset);
   }
 
   applyGravity() {
@@ -62,14 +55,6 @@ class Ball {
     }
   }
 
-  // setMouseInside(x, y) {
-  //   const dx = x - this.pos.x;
-  //   const dy = y - this.pos.y;
-  //   // const distance = Math.sqrt(dx * dx + dy * dy);
-  //   const distance = (dx ** 2 + dy ** 2) ** (1 / 2);
-  //   this.isMouseInside = distance <= this.diameter / 2;
-  // }
-
   isMouseInside(x, y) {
     const dx = x - this.pos.x;
     const dy = y - this.pos.y;
@@ -84,16 +69,24 @@ class Ball {
     this.isGrabbbed = true;
   }
 
-  ungrab() {
+  ungrab(vx, vy) {
+    this.vel.set(vx, vy);
     this.isGrabbbed = false;
+  }
+
+  drag(x, y) {
+    this.pos.set(x, y);
+    this.pos.add(this.grabOffset);
   }
 
   show(isHovered) {
     if (isHovered) {
+      strokeWeight(1);
       noFill();
       stroke(this.colour);
     } else {
-      noStroke();
+      strokeWeight(2);
+      stroke(0);
       fill(this.colour);
     }
     circle(this.pos.x, this.pos.y, this.diameter);

@@ -4,11 +4,19 @@ const ballNum = 5;
 const balls = [];
 const diameter = 100;
 const speed = 5;
-const gravity = 0.1;
+// const gravity = 0.1;
+let gravity;
 const restitution = 0.5;
 
 let hoveredBall = null;
 let grabbedBall = null;
+
+let lastVx = 0;
+let lastVy = 0;
+const sampleNum = 10;
+let mouseDeltas = [];
+
+let wind;
 
 function setup() {
   createCanvas(700, 800);
@@ -20,17 +28,32 @@ function setup() {
     const randomColour = palette[randomPaletteIdx];
     balls.push(new Ball(randomDiameter, randomSpeed, randomColour));
   }
+
+  gravity = createVector(0, 0.1);
+  wind = createVector(0, 0);
 }
 
 function draw() {
   background(0);
 
+  wind.set(0, 0);
   if (grabbedBall) {
     grabbedBall.drag(mouseX, mouseY);
+    mouseDeltas.push(createVector(mouseX - pmouseX, mouseY - pmouseY));
+    if (mouseDeltas.length > sampleNum) {
+      mouseDeltas.shift();
+    }
+  } else if (mouseIsPressed) {
+    wind.set(mouseX, mouseY);
+    wind.sub(width / 2, height / 2);
+    const windMag = wind.mag();
+    const normalizedWindMag = windMag / (0.5 * width);
+    wind.setMag(1000 * normalizedWindMag);
   }
 
   balls.forEach((aBall) => {
-    aBall.applyGravity();
+    aBall.applyForce(wind);
+    aBall.applyGravity(gravity);
     aBall.update();
     aBall.resoveWallCollision();
   });
@@ -50,6 +73,9 @@ function draw() {
     aBall.show(aBall === hoveredBall);
     aBall.showDebug();
   });
+
+  stroke("white");
+  line(0.5 * width, 0.5 * height, 0.5 * width + wind.x, 0.5 * height + wind.y);
 }
 
 function mousePressed() {
@@ -62,13 +88,32 @@ function mousePressed() {
     if (hoveredBall) {
       grabbedBall = hoveredBall;
       grabbedBall.grab(mouseX, mouseY);
+      mouseDeltas = [];
     }
   }
 }
 
 function mouseReleased() {
   if (grabbedBall) {
-    grabbedBall.ungrab();
+    // const vx = mouseX - pmouseX;
+    // const vy = mouseY - pmouseY;
+    // lastVx = vx;
+    // lastVy = vy;
+    // grabbedBall.ungrab(vx, vy);
+    if (mouseDeltas.length > 0) {
+      const averageMouseDelta = createVector(0, 0);
+      mouseDeltas.forEach((aMousePos) => {
+        averageMouseDelta.add(aMousePos);
+      });
+      averageMouseDelta.div(mouseDeltas.length);
+      grabbedBall.ungrab(averageMouseDelta.x, averageMouseDelta.y);
+      lastVx = averageMouseDelta.x;
+      lastVy = averageMouseDelta.y;
+    } else {
+      grabbedBall.ungrab(0, 0);
+      lastVx = 0;
+      lastVy = 0;
+    }
     grabbedBall = null;
   }
 }
