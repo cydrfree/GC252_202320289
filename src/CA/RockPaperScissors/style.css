@@ -1,0 +1,12 @@
+.section {
+  padding-inline: 1.5rem;
+}
+
+.container {
+  margin-inline: auto;
+  text-align: center;
+}
+
+canvas {
+  margin-inline: auto;
+}
